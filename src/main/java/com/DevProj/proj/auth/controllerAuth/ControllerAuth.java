@@ -1,0 +1,70 @@
+package com.DevProj.proj.auth.controllerAuth;
+
+import com.DevProj.proj.auth.dtoAuth.request.LoginRequest;
+import com.DevProj.proj.auth.dtoAuth.request.RegistroRequest;
+import com.DevProj.proj.auth.dtoAuth.response.LoginRes;
+import com.DevProj.proj.auth.dtoAuth.response.RegistroResponse;
+import com.DevProj.proj.auth.exception.EmailAlreadyExistsException;
+import com.DevProj.proj.auth.service.ServiceAuth;
+import com.DevProj.proj.models.Users;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RequestMapping("/auth")
+@RestController
+public class ControllerAuth {
+
+    private final ServiceAuth serviceAuth;
+
+    public ControllerAuth(ServiceAuth serviceAuth) {
+        this.serviceAuth = serviceAuth;
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginRes> login(
+        @Valid @RequestBody LoginRequest loginRequest
+    ) throws Exception {
+        if (
+            !serviceAuth.loginIsValid(
+                loginRequest.email(),
+                loginRequest.password()
+            )
+        ) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        String token = serviceAuth.gerarToken(
+            loginRequest.email(),
+            loginRequest.password()
+        );
+        Users user = serviceAuth.findByEmail(loginRequest.email());
+
+        return ResponseEntity.ok(
+            new LoginRes(
+                token,
+                user.getRole().contains("ADMIN"),
+                user.getName(),
+                user.getAvatar_url(),
+                user.getUsername()
+            )
+        );
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<RegistroResponse> register(
+        @Valid @RequestBody RegistroRequest registroRequest
+    ) throws EmailAlreadyExistsException {
+        Users user = serviceAuth.saveUser(
+            registroRequest.username(),
+            registroRequest.password(),
+            registroRequest.email()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+            new RegistroResponse(user.getName(), user.getUsername())
+        );
+    }
+}
