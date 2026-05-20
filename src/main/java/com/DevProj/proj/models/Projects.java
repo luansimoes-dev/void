@@ -55,7 +55,7 @@ public class Projects {
     @Column(nullable = false)
     private LocalDateTime updated_at;
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
         name = "has_tag",
         joinColumns = @JoinColumn(name = "project_id"),

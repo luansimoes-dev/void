@@ -5,14 +5,20 @@ import com.DevProj.proj.models.Tag;
 import com.DevProj.proj.models.Users;
 import com.DevProj.proj.posts.dto.request.CreatePostRequest;
 import com.DevProj.proj.posts.dto.request.TagRequest;
+import com.DevProj.proj.posts.dto.response.ProjectsReponse;
+import com.DevProj.proj.posts.dto.response.UserResponse;
 import com.DevProj.proj.posts.exception.NotFoundException;
 import com.DevProj.proj.posts.exception.PostLenException;
 import com.DevProj.proj.repository.ProjectRepo;
+import com.DevProj.proj.repository.TagRepo;
 import com.DevProj.proj.repository.UserRepo;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,19 +26,30 @@ public class ServicesPosts {
 
     private final ProjectRepo projectRepo;
     private final UserRepo userRepo;
+    private final TagRepo tagRepository;
 
-    public ServicesPosts(ProjectRepo projectRepo, UserRepo userRepo) {
+    public ServicesPosts(
+        ProjectRepo projectRepo,
+        UserRepo userRepo,
+        TagRepo tagRepository
+    ) {
         this.projectRepo = projectRepo;
         this.userRepo = userRepo;
+        this.tagRepository = tagRepository;
     }
 
     public void createPost(CreatePostRequest post, Users user)
         throws RuntimeException {
         validatePost(post);
-        List<Tag> tags = new ArrayList<Tag>();
-        for (TagRequest tag : post.tags()) {
-            tags.add(new Tag(tag.name()));
-        }
+        List<Tag> tags = post
+            .tags()
+            .stream()
+            .map(t ->
+                tagRepository
+                    .findByName(t.name())
+                    .orElseGet(() -> tagRepository.save(new Tag(t.name())))
+            )
+            .toList();
 
         Projects pojeto = new Projects(
             post.name(),
@@ -46,6 +63,29 @@ public class ServicesPosts {
             user
         );
         projectRepo.save(pojeto);
+    }
+
+    public Page<ProjectsReponse> getAllPosts(Users user, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        return projectRepo.findAll(pageable).map(project -> {
+            return new ProjectsReponse(
+                project.getName(),
+                project.getDescription(),
+                project.getTags().stream().map(Tag::getName).toList(),
+                new UserResponse(
+                    project.getOwner().getName(),
+                    project.getOwner().getAvatar_url(),
+                    project.getOwner().getBio(),
+                    false
+                ),
+                project.getGithub_url(),
+                project.getLink_url(),
+                project.getOwner().getId().equals(user.getId()),
+                project.getCreated_at(),
+                project.getUpdated_at()
+            );
+        });
     }
 
     private void validatePost(CreatePostRequest post) throws RuntimeException {

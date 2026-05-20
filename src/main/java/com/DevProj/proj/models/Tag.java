@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.util.List;
 
 @Entity(name = "Tag")
+@Table(name = "tag")
 public class Tag {
 
     public Tag() {}

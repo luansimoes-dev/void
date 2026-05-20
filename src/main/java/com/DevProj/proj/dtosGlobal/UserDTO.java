@@ -1,8 +1,8 @@
 package com.DevProj.proj.dtosGlobal;
 
 public record UserDTO(
-    String username,
-    String email,
-    String bio,
-    String avatar_url
+    boolean isAdmin,
+    String name,
+    String photo,
+    String email
 ) {}

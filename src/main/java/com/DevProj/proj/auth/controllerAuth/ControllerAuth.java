@@ -6,10 +6,13 @@ import com.DevProj.proj.auth.dtoAuth.response.LoginRes;
 import com.DevProj.proj.auth.dtoAuth.response.RegistroResponse;
 import com.DevProj.proj.auth.exception.EmailAlreadyExistsException;
 import com.DevProj.proj.auth.service.ServiceAuth;
+import com.DevProj.proj.dtosGlobal.UserDTO;
 import com.DevProj.proj.models.Users;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -65,6 +68,18 @@ public class ControllerAuth {
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(
             new RegistroResponse(user.getName(), user.getUsername())
+        );
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> getMe(@AuthenticationPrincipal Users user) {
+        return ResponseEntity.ok(
+            new UserDTO(
+                user.getRole().equals("ADMIN"),
+                user.getName(),
+                user.getAvatar_url(),
+                user.getUsername()
+            )
         );
     }
 }
