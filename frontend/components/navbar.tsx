@@ -53,6 +53,8 @@ import {
 import { useUser } from "@/hooks/use-user";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { Dialog, DialogTrigger } from "./ui/dialog";
+import { CreatePost } from "./create-post";
 
 interface HeaderBarItens {
   label: string;
@@ -140,11 +142,17 @@ export default function Navbar() {
       </SidebarContent>
 
       <SidebarFooter className="p-3">
-        <div className="px-1 pt-2">
-          <button className="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 cursor-pointer">
-            Criar Post
-          </button>
-        </div>
+        <Dialog>
+          <form className="px-1 py-2">
+            <DialogTrigger asChild>
+              <button className="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 cursor-pointer">
+                Criar Post
+              </button>
+            </DialogTrigger>
+            <CreatePost />
+          </form>
+        </Dialog>
+
         {activeCard && (
           <Card
             className="
@@ -298,14 +306,12 @@ export default function Navbar() {
 
             <DropdownMenuSeparator className="bg-border" />
 
-            <DropdownMenuItem>
-              <button
-                onClick={logoutCliente}
-                className="gap-2 text-destructive flex items-center"
-              >
-                <IoLogOut size={16} />
-                sair
-              </button>
+            <DropdownMenuItem
+              onClick={logoutCliente}
+              className="gap-2 text-destructive flex items-center"
+            >
+              <IoLogOut size={16} />
+              sair
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

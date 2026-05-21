@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/hooks/use-user";
 
 import Link from "next/link";
@@ -83,66 +84,69 @@ export default function HomePage() {
   const { user } = useUser();
   const [cards, setCards] = useState<CardItem[]>([]);
   const [expanded, setExpanded] = useState<number | null>(null);
-
   const [page, setPage] = useState(0);
-
   const [loading, setLoading] = useState(false);
+  const loadingRef = useRef(false);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null); // <- tava faltando isso
 
-  const [hasMore, setHasMore] = useState(true);
+  const loadCards = useCallback(
+    async (currentPage: number) => {
+      if (!user?.jwt || loadingRef.current) return;
 
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+      loadingRef.current = true;
+      setLoading(true);
 
-  const loadCards = useCallback(async () => {
-    if (!user?.jwt) return;
+      try {
+        const newCards = await fetchCards(currentPage, user.jwt);
 
-    if (loading || !hasMore) return;
-
-    setLoading(true);
-
-    try {
-      const newCards = await fetchCards(page, user.jwt);
-
-      if (newCards.length === 0) {
-        setHasMore(false);
-      } else {
-        setCards((prev) => [...prev, ...newCards]);
-
-        setPage((prev) => prev + 1);
+        if (newCards.length === 0) {
+          // Chegou no fim — reinicia do zero
+          setCards([]);
+          setPage(1);
+          const firstPage = await fetchCards(0, user.jwt);
+          setCards(firstPage);
+        } else {
+          setCards((prev) => [...prev, ...newCards]);
+          setPage(currentPage + 1);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        loadingRef.current = false;
+        setLoading(false);
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.jwt, loading, hasMore, page]);
+    },
+    [user?.jwt],
+  );
 
+  // Carga inicial
   useEffect(() => {
     if (!user?.jwt) return;
-    loadCards();
+    loadCards(0);
   }, [user?.jwt]);
+
+  // Observer — passa a página atual via ref pra evitar closure stale
+  const pageRef = useRef(page);
+  useEffect(() => {
+    pageRef.current = page;
+  }, [page]);
 
   useEffect(() => {
     const el = loadMoreRef.current;
-
     if (!el) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const first = entries[0];
-
-        if (first.isIntersecting) {
-          loadCards();
+        if (entries[0].isIntersecting) {
+          loadCards(pageRef.current);
         }
       },
-      {
-        threshold: 1,
-      },
+      { threshold: 1 },
     );
 
     observer.observe(el);
-
     return () => observer.disconnect();
-  }, [page, loading, hasMore]);
+  }, [loadCards]);
 
   const cores: string[] = [
     "bg-pink-700 text-white",
@@ -296,10 +300,39 @@ export default function HomePage() {
 
         <div ref={loadMoreRef} className="h-10" />
 
-        {loading && <p className="text-center text-zinc-400">Carregando...</p>}
+        {loading && (
+          <div className="flex flex-col gap-6">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="overflow-hidden border-primary/20">
+                <CardHeader className="space-y-4">
+                  {/* Avatar + nome */}
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-11 w-11 rounded-full" />
+                    <Skeleton className="h-4 w-32 rounded-md" />
+                  </div>
+                  {/* Título */}
+                  <Skeleton className="h-5 w-2/3 rounded-md" />
+                </CardHeader>
 
-        {!hasMore && (
-          <p className="text-center text-zinc-500">Sem mais posts</p>
+                <CardContent className="space-y-3">
+                  {/* Descrição */}
+                  <Skeleton className="h-3 w-full rounded-md" />
+                  <Skeleton className="h-3 w-5/6 rounded-md" />
+                  {/* Tags */}
+                  <div className="flex gap-2">
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                    <Skeleton className="h-6 w-14 rounded-full" />
+                  </div>
+                </CardContent>
+
+                <CardFooter className="gap-2 pt-2">
+                  <Skeleton className="h-9 w-24 rounded-lg" />
+                  <Skeleton className="h-9 w-24 rounded-lg" />
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
     </div>

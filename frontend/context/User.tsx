@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useState, useEffect } from "react";
 import { UserType } from "../types/UserType";
+import { Spinner } from "@/components/ui/spinner";
 
 type UserContextType = {
   user: UserType | null;
@@ -15,20 +16,41 @@ export function UserProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   const [user, setUser] = useState<UserType | null>(null);
-
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
-    fetch("/api/auth/getuser")
-      .then((res) => {
+    async function fetchUser() {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/auth/getuser");
         if (!res.ok) return null;
-        return res.json();
-      })
-      .then((data) => setUser(data))
-      .catch(() => setUser(null));
+        const data = await res.json();
+        setUser(data);
+      } catch {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchUser();
   }, []);
 
   return (
     <UserContext.Provider value={{ user, setUser }}>
-      {children}
+      {loading ? (
+        <div className="fixed inset-0 flex flex-col items-center justify-center bg-background">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl" />
+
+            <Spinner className="relative size-10 animate-spin text-primary" />
+          </div>
+
+          <p className="mt-6 animate-pulse text-sm font-medium tracking-wide text-zinc-400">
+            Carregando sessão...
+          </p>
+        </div>
+      ) : (
+        children
+      )}
     </UserContext.Provider>
   );
 }
