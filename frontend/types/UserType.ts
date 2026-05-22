@@ -4,4 +4,6 @@ export interface UserType {
   email: string;
   jwt: string;
   photo: string;
+  createdAt?: string;
+  id?: number;
 }

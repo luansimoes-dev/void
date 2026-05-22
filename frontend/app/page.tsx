@@ -1,4 +1,4 @@
-import Footer from "@/components/footer";
+import { MD } from "@/components/MD";
 
 export default function Home() {
   return <div></div>;

@@ -53,6 +53,19 @@ import {
 import { useUser } from "@/hooks/use-user";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { Dialog, DialogTrigger } from "./ui/dialog";
+import { CreatePost } from "./create-post";
+import { useForm } from "react-hook-form";
+import { createPostSchema } from "@/schema/create-post";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { CreatePostSchema } from "@/schema/create-post";
+import {
+  createPostService,
+  type errCreatePost,
+} from "@/services/create-post-service";
+import { Toaster } from "./ui/sonner";
+import { toast } from "sonner";
+import { FaTrophy } from "react-icons/fa6";
 
 interface HeaderBarItens {
   label: string;
@@ -64,6 +77,24 @@ interface HeaderBarItens {
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { user, setUser } = useUser();
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<CreatePostSchema>({
+    resolver: zodResolver(createPostSchema),
+    defaultValues: {
+      content: "",
+      title: "",
+      tags: [],
+      demoUrl: "",
+      githubUrl: "",
+    },
+  });
   const items: HeaderBarItens[] = [
     {
       label: "Inicial",
@@ -84,9 +115,29 @@ export default function Navbar() {
       ativo: pathname === "/pages/explore",
       href: "explore",
     },
+    {
+      label: "Ranking",
+      icon: <FaTrophy size={18} />,
+      ativo: pathname === "/pages/ranking",
+      href: "ranking",
+    },
   ];
+
+  async function onSubmit(post: CreatePostSchema) {
+    const token = user?.jwt;
+    if (!token) return;
+    try {
+      const response = await createPostService(post, token);
+      if (response.status === 200) {
+        toast.success("Post criado com sucesso!");
+        router.push("/home");
+      }
+    } catch (error: errCreatePost) {
+      toast.error(error.message);
+    }
+  }
   const [activeCard, setActiveCard] = useState(true);
-  const { user, setUser } = useUser();
+
   const router = useRouter();
   const logoutCliente = async () => {
     await logout();
@@ -94,24 +145,26 @@ export default function Navbar() {
     router.push("/login");
   };
   return (
-    <Sidebar className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
-      <SidebarHeader className="border-b border-sidebar-border p-5">
-        <div className="flex flex-col gap-1">
-          <span className="text-lg font-semibold">DevHub</span>
+    <>
+      <Toaster />
+      <Sidebar className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+        <SidebarHeader className="border-b border-sidebar-border p-5">
+          <div className="flex flex-col gap-1">
+            <span className="text-lg font-semibold">DevHub</span>
 
-          <span className="text-xs text-muted-foreground">
-            social for developers
-          </span>
-        </div>
-      </SidebarHeader>
+            <span className="text-xs text-muted-foreground">
+              social for developers
+            </span>
+          </div>
+        </SidebarHeader>
 
-      <SidebarContent className="px-3 py-4">
-        <SidebarMenu className="space-y-2">
-          {items.map((item, index) => (
-            <SidebarMenuItem key={index}>
-              <Link href={item.href}>
-                <SidebarMenuButton
-                  className="
+        <SidebarContent className="px-3 py-4">
+          <SidebarMenu className="space-y-2">
+            {items.map((item, index) => (
+              <SidebarMenuItem key={index}>
+                <Link href={item.href}>
+                  <SidebarMenuButton
+                    className="
                   h-12 rounded-2xl px-4
                   text-muted-foreground
                   transition-all duration-200
@@ -121,33 +174,46 @@ export default function Navbar() {
                   data-[active=true]:text-primary-foreground
                   cursor-pointer
                 "
-                  data-active={item.ativo}
-                >
-                  <div className="relative">
-                    {item.icon}
-                    {item.badge && (
-                      <span className="absolute -top-2 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-                        {item.badge > 99 ? "99+" : item.badge}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-sm font-medium">{item.label}</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarContent>
+                    data-active={item.ativo}
+                  >
+                    <div className="relative">
+                      {item.icon}
+                      {item.badge && (
+                        <span className="absolute -top-2 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                          {item.badge > 99 ? "99+" : item.badge}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
 
-      <SidebarFooter className="p-3">
-        <div className="px-1 pt-2">
-          <button className="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 cursor-pointer">
-            Criar Post
-          </button>
-        </div>
-        {activeCard && (
-          <Card
-            className="
+        <SidebarFooter className="p-3">
+          <Dialog>
+            <div className="px-1 py-2">
+              <DialogTrigger asChild>
+                <button className="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 cursor-pointer">
+                  Criar Post
+                </button>
+              </DialogTrigger>
+              <CreatePost
+                register={register}
+                watch={watch}
+                setValue={setValue}
+                onSubmit={handleSubmit(onSubmit)}
+                reset={reset}
+                errors={errors}
+              />
+            </div>
+          </Dialog>
+
+          {activeCard && (
+            <Card
+              className="
               relative overflow-hidden
 
               rounded-3xl
@@ -158,9 +224,9 @@ export default function Navbar() {
 
               shadow-none
             "
-          >
-            <button
-              className="
+            >
+              <button
+                className="
                 absolute right-3 top-3
 
                 flex h-8 w-8 items-center justify-center
@@ -174,27 +240,27 @@ export default function Navbar() {
                 hover:bg-accent
                 hover:text-foreground
               "
-              onClick={() => setActiveCard(false)}
-            >
-              <X size={16} />
-            </button>
+                onClick={() => setActiveCard(false)}
+              >
+                <X size={16} />
+              </button>
 
-            <CardHeader className="space-y-4 p-5">
-              <div className="space-y-1">
-                <CardTitle className="text-sm font-semibold tracking-tight">
-                  Confira nosso GitHub
-                </CardTitle>
+              <CardHeader className="space-y-4 p-5">
+                <div className="space-y-1">
+                  <CardTitle className="text-sm font-semibold tracking-tight">
+                    Confira nosso GitHub
+                  </CardTitle>
 
-                <CardDescription className="text-xs leading-relaxed text-muted-foreground">
-                  Explore o código fonte, acompanhe updates e contribua com o
-                  projeto.
-                </CardDescription>
-              </div>
-            </CardHeader>
+                  <CardDescription className="text-xs leading-relaxed text-muted-foreground">
+                    Explore o código fonte, acompanhe updates e contribua com o
+                    projeto.
+                  </CardDescription>
+                </div>
+              </CardHeader>
 
-            <CardFooter>
-              <button
-                className="
+              <CardFooter>
+                <button
+                  className="
                   w-full rounded-2xl
 
                   border border-primary/20
@@ -210,106 +276,107 @@ export default function Navbar() {
                   hover:text-primary-foreground
                   cursor-pointer
                 "
-              >
-                Abrir GitHub
-              </button>
-            </CardFooter>
-          </Card>
-        )}
+                >
+                  Abrir GitHub
+                </button>
+              </CardFooter>
+            </Card>
+          )}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              className="
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                className="
                 h-14 rounded-2xl
                 hover:bg-sidebar-accent
               "
-            >
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={user?.photo} />
-
-                <AvatarFallback>
-                  {user?.name.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-
-                <AvatarBadge className="bg-primary" />
-              </Avatar>
-
-              <div className="grid flex-1 text-left leading-tight">
-                <span className="truncate text-sm font-medium">
-                  {user?.name}
-                </span>
-
-                <span className="truncate text-xs text-muted-foreground">
-                  {user?.email}
-                </span>
-              </div>
-
-              <ChevronsUpDown className="size-4 text-muted-foreground" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent
-            className="
-              w-64 rounded-2xl
-              border-border
-              bg-popover
-              text-popover-foreground
-            "
-            align="end"
-            sideOffset={8}
-          >
-            <DropdownMenuLabel className="p-3">
-              <div className="flex items-center gap-3">
+              >
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={user?.photo} />
 
                   <AvatarFallback>
                     {user?.name.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
+
+                  <AvatarBadge className="bg-primary" />
                 </Avatar>
 
-                <div>
-                  <p className="text-sm font-medium">{user?.name}</p>
+                <div className="grid flex-1 text-left leading-tight">
+                  <span className="truncate text-sm font-medium">
+                    {user?.name}
+                  </span>
 
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {user?.email}
+                  </span>
                 </div>
-              </div>
-            </DropdownMenuLabel>
 
-            <DropdownMenuSeparator className="bg-border" />
+                <ChevronsUpDown className="size-4 text-muted-foreground" />
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
 
-            <DropdownMenuGroup>
-              <DropdownMenuItem className="gap-2">
-                <IoPerson size={16} />
-                Meu Perfil
-              </DropdownMenuItem>
+            <DropdownMenuContent
+              className="
+              w-64 rounded-2xl
+              border-border
+              bg-popover
+              text-popover-foreground
+            "
+              align="end"
+              sideOffset={8}
+            >
+              <DropdownMenuLabel className="p-3">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={user?.photo} />
 
-              <DropdownMenuItem className="gap-2">
-                <IoSettings size={16} />
-                Configurações
-              </DropdownMenuItem>
+                    <AvatarFallback>
+                      {user?.name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
 
-              <DropdownMenuItem className="gap-2">
-                <IoBookmark size={16} />
-                Salvos
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
+                  <div>
+                    <p className="text-sm font-medium">{user?.name}</p>
 
-            <DropdownMenuSeparator className="bg-border" />
+                    <p className="text-xs text-muted-foreground">
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
 
-            <DropdownMenuItem>
-              <button
+              <DropdownMenuSeparator className="bg-border" />
+
+              <DropdownMenuGroup>
+                <DropdownMenuItem className="gap-2">
+                  <IoPerson size={16} />
+                  Meu Perfil
+                </DropdownMenuItem>
+
+                <DropdownMenuItem className="gap-2">
+                  <IoSettings size={16} />
+                  Configurações
+                </DropdownMenuItem>
+
+                <DropdownMenuItem className="gap-2">
+                  <IoBookmark size={16} />
+                  Salvos
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+
+              <DropdownMenuSeparator className="bg-border" />
+
+              <DropdownMenuItem
                 onClick={logoutCliente}
                 className="gap-2 text-destructive flex items-center"
               >
                 <IoLogOut size={16} />
                 sair
-              </button>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarFooter>
-    </Sidebar>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarFooter>
+      </Sidebar>
+    </>
   );
 }

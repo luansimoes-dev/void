@@ -1,14 +1,17 @@
 package com.DevProj.proj.posts.dto.response;
 
-import com.DevProj.proj.dtosGlobal.UserDTO;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record ProjectsReponse(
-    String titulo,
-    UserDTO user,
-    String descricao,
-    int likes,
-
+    String title,
+    Long id,
+    String description,
+    List<String> tags,
+    UserResponse user,
+    String githubLink,
+    String demoLink,
+    Boolean thisUserIsOwner,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {}
