@@ -72,4 +72,8 @@ public class ServiceAuth {
         }
         return true;
     }
+
+    public Users findById(Long id) {
+        return userRepo.findById(id).orElse(null);
+    }
 }

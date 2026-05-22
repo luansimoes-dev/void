@@ -21,12 +21,14 @@ import { MdVerified } from "react-icons/md";
 
 interface UserCard {
   name: string;
+  id: number;
   avatar?: string;
   description?: string;
   isVerified?: boolean;
 }
 
 interface CardItem {
+  id: number;
   title: string;
   description: string;
   image?: string;
@@ -62,7 +64,9 @@ async function fetchCards(
   const body = await res.json();
 
   const data: CardItem[] = body.content.map((item: any) => ({
+    id: item.id,
     title: item.title,
+
     description: item.description,
     image: item.image,
     tags: item.tags,
@@ -70,6 +74,7 @@ async function fetchCards(
     demoLink: item.demoLink,
 
     user: {
+      id: item.user.id,
       name: item.user.name,
       avatar: item.user.avatar,
       description: item.user.description,
@@ -233,8 +238,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <CardTitle className="text-xl font-bold tracking-tight">
-                {card.title}
+              <CardTitle className="text-xl font-bold tracking-tight cursor-pointer hover:underline">
+                <Link href={`/${card.user.id}/${card.id}`}>{card.title}</Link>
               </CardTitle>
             </CardHeader>
 

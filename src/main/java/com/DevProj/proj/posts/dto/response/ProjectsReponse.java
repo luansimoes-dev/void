@@ -5,6 +5,7 @@ import java.util.List;
 
 public record ProjectsReponse(
     String title,
+    Long id,
     String description,
     List<String> tags,
     UserResponse user,

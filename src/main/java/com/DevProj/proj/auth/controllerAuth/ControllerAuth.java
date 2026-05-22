@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -51,6 +52,7 @@ public class ControllerAuth {
                 token,
                 user.getRole().contains("ADMIN"),
                 user.getName(),
+                user.getId(),
                 user.getAvatar_url(),
                 user.getUsername()
             )
@@ -77,8 +79,23 @@ public class ControllerAuth {
             new UserDTO(
                 user.getRole().equals("ADMIN"),
                 user.getName(),
+                user.getId(),
                 user.getAvatar_url(),
                 user.getUsername()
+            )
+        );
+    }
+
+    @GetMapping("/user/{id}")
+    public ResponseEntity<UserDTO> getUser(@PathVariable Long id) {
+        Users foundUser = serviceAuth.findById(id);
+        return ResponseEntity.ok(
+            new UserDTO(
+                foundUser.getRole().equals("ADMIN"),
+                foundUser.getName(),
+                foundUser.getId(),
+                foundUser.getAvatar_url(),
+                foundUser.getUsername()
             )
         );
     }

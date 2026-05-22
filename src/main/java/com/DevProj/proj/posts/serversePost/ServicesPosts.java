@@ -76,10 +76,12 @@ public class ServicesPosts {
         return projectRepo.findAll(pageable).map(project -> {
             return new ProjectsReponse(
                 project.getName(),
+                project.getId(),
                 project.getDescription(),
                 project.getTags().stream().map(Tag::getName).toList(),
                 new UserResponse(
                     project.getOwner().getName(),
+                    project.getOwner().getId(),
                     project.getOwner().getAvatar_url(),
                     project.getOwner().getBio(),
                     false
@@ -98,9 +100,10 @@ public class ServicesPosts {
             throw new PostLenException("name", 1, 100);
         }
         if (
-            post.description().length() < 1 || post.description().length() > 500
+            post.description().length() < 1 ||
+            post.description().length() > 5000
         ) {
-            throw new PostLenException("description", 1, 500);
+            throw new PostLenException("description", 1, 5000);
         }
         if (post.tags().size() < 1 || post.tags().size() > 10) {
             throw new PostLenException("tags", 1, 10);
@@ -115,8 +118,8 @@ public class ServicesPosts {
         }
     }
 
-    public void getPostById(Long id) {
-        projectRepo
+    public Projects getPostById(Long id) {
+        return projectRepo
             .findById(id)
             .orElseThrow(() ->
                 new NotFoundException("Project with id = " + id)

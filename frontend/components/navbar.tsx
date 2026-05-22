@@ -65,6 +65,7 @@ import {
 } from "@/services/create-post-service";
 import { Toaster } from "./ui/sonner";
 import { toast } from "sonner";
+import { FaTrophy } from "react-icons/fa6";
 
 interface HeaderBarItens {
   label: string;
@@ -113,6 +114,12 @@ export default function Navbar() {
       icon: <FaCompass size={18} />,
       ativo: pathname === "/pages/explore",
       href: "explore",
+    },
+    {
+      label: "Ranking",
+      icon: <FaTrophy size={18} />,
+      ativo: pathname === "/pages/ranking",
+      href: "ranking",
     },
   ];
 

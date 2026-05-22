@@ -28,6 +28,7 @@ import {
   UseFormWatch,
 } from "react-hook-form";
 import { CreatePostSchema } from "@/schema/create-post";
+import { MD } from "./MD";
 
 interface CreatePostProps {
   setValue: UseFormSetValue<CreatePostSchema>;
@@ -226,9 +227,7 @@ export function CreatePost({
               </CardHeader>
 
               <CardContent className="space-y-3">
-                <p className="text-sm leading-relaxed text-zinc-400">
-                  {content || "Visualização do seu conteúdo..."}
-                </p>
+                <MD md={content || "Visualização do seu conteúdo..."} />
 
                 <div className="flex flex-wrap gap-2">
                   {tags.map((tag, index) => (

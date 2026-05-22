@@ -1,8 +1,11 @@
 package com.DevProj.proj.posts.controlerPosts;
 
+import com.DevProj.proj.models.Projects;
+import com.DevProj.proj.models.Tag;
 import com.DevProj.proj.models.Users;
 import com.DevProj.proj.posts.dto.request.CreatePostRequest;
 import com.DevProj.proj.posts.dto.response.ProjectsReponse;
+import com.DevProj.proj.posts.dto.response.UserResponse;
 import com.DevProj.proj.posts.serversePost.ServicesPosts;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -49,7 +52,32 @@ public class ControllerPosts {
     }
 
     @GetMapping("/{id}")
-    public void getPostById(@PathVariable Long id) {
-        servicesPosts.getPostById(id);
+    public ProjectsReponse getPostById(
+        @PathVariable Long id,
+        @AuthenticationPrincipal Users user
+    ) {
+        final Projects post = servicesPosts.getPostById(id);
+        boolean isOwner = false;
+        if (user != null) {
+            isOwner = post.getOwner().getId().equals(user.getId());
+        }
+        return new ProjectsReponse(
+            post.getName(),
+            post.getId(),
+            post.getDescription(),
+            post.getTags().stream().map(Tag::getName).toList(),
+            new UserResponse(
+                post.getOwner().getName(),
+                post.getOwner().getId(),
+                post.getOwner().getAvatar_url(),
+                post.getOwner().getBio(),
+                false
+            ),
+            post.getGithub_url(),
+            post.getLink_url(),
+            isOwner,
+            post.getCreatedAt(),
+            post.getUpdatedAt()
+        );
     }
 }
