@@ -100,7 +100,6 @@ export default function HomePage() {
         const newCards = await fetchCards(currentPage, user.jwt);
 
         if (newCards.length === 0) {
-          // Chegou no fim — reinicia do zero
           setCards([]);
           setPage(1);
           const firstPage = await fetchCards(0, user.jwt);
@@ -119,13 +118,11 @@ export default function HomePage() {
     [user?.jwt],
   );
 
-  // Carga inicial
   useEffect(() => {
     if (!user?.jwt) return;
     loadCards(0);
   }, [user?.jwt]);
 
-  // Observer — passa a página atual via ref pra evitar closure stale
   const pageRef = useRef(page);
   useEffect(() => {
     pageRef.current = page;

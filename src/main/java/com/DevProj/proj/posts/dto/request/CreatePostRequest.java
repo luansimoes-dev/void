@@ -6,7 +6,7 @@ import java.util.List;
 
 public record CreatePostRequest(
     @NotBlank String name,
-    @NotBlank String LinkGithub,
+    String LinkGithub,
     String linkProjeto,
     @NotBlank String description,
     List<TagRequest> tags

@@ -19,6 +19,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -66,7 +67,11 @@ public class ServicesPosts {
     }
 
     public Page<ProjectsReponse> getAllPosts(Users user, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(
+            page,
+            size,
+            Sort.by("createdAt").descending()
+        );
 
         return projectRepo.findAll(pageable).map(project -> {
             return new ProjectsReponse(
@@ -82,21 +87,20 @@ public class ServicesPosts {
                 project.getGithub_url(),
                 project.getLink_url(),
                 project.getOwner().getId().equals(user.getId()),
-                project.getCreated_at(),
-                project.getUpdated_at()
+                project.getCreatedAt(),
+                project.getUpdatedAt()
             );
         });
     }
 
     private void validatePost(CreatePostRequest post) throws RuntimeException {
-        if (post.name().length() < 3 || post.name().length() > 35) {
-            throw new PostLenException("name", 3, 35);
+        if (post.name().length() < 1 || post.name().length() > 100) {
+            throw new PostLenException("name", 1, 100);
         }
         if (
-            post.description().length() < 10 ||
-            post.description().length() > 500
+            post.description().length() < 1 || post.description().length() > 500
         ) {
-            throw new PostLenException("description", 10, 500);
+            throw new PostLenException("description", 1, 500);
         }
         if (post.tags().size() < 1 || post.tags().size() > 10) {
             throw new PostLenException("tags", 1, 10);

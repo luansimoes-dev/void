@@ -15,8 +15,8 @@ public class Projects {
         String link_url,
         String description,
         int likes,
-        LocalDateTime created_at,
-        LocalDateTime updated_at,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
         List<Tag> tags,
         Users owner
     ) {
@@ -25,8 +25,8 @@ public class Projects {
         this.link_url = link_url;
         this.description = description;
         this.likes = likes;
-        this.created_at = created_at;
-        this.updated_at = updated_at;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
         this.tags = tags;
         this.owner = owner;
     }
@@ -49,13 +49,13 @@ public class Projects {
     @Column(nullable = false)
     private int likes;
 
-    @Column(nullable = false)
-    private LocalDateTime created_at;
+    @Column(nullable = false, name = "created_at")
+    private LocalDateTime createdAt;
 
-    @Column(nullable = false)
-    private LocalDateTime updated_at;
+    @Column(nullable = false, name = "updated_at")
+    private LocalDateTime updatedAt;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinTable(
         name = "has_tag",
         joinColumns = @JoinColumn(name = "project_id"),
@@ -69,13 +69,13 @@ public class Projects {
 
     @PrePersist
     protected void onCreate() {
-        created_at = LocalDateTime.now();
-        updated_at = LocalDateTime.now();
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updated_at = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
     @OneToMany(mappedBy = "projectId")
@@ -129,20 +129,20 @@ public class Projects {
         this.likes = likes;
     }
 
-    public LocalDateTime getCreated_at() {
-        return created_at;
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
-    public void setCreated_at(LocalDateTime created_at) {
-        this.created_at = created_at;
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
-    public LocalDateTime getUpdated_at() {
-        return updated_at;
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 
-    public void setUpdated_at(LocalDateTime updated_at) {
-        this.updated_at = updated_at;
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public Users getOwner() {
